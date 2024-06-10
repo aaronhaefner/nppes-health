@@ -1,7 +1,8 @@
 # nppes-nber
 
 ## Overview
-The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER). This package allows users to query the data and store it in a local SQLite database. The data downloading functionality is encapsulated to ensure efficient use and to prevent speed limitations imposed by the NBER website.
+The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER).
+The development of this package is on-going and should not be assumed usable in its current state until noted here.
 
 ## Features
 - **Download NPPES Data**: Private methods for downloading NPPES data files from the NBER website.
@@ -71,4 +72,3 @@ To contribute to this project, please fork the repository, create a new branch, 
 
 ## License
 This project is licensed under the MIT License.
-```
