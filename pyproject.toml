@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Aaron Haefner <aaronhaefner@uchicago.edu>"]
 readme = "README.md"
-packages = [{include = "nppes_nber"}]
+packages = [{include = "nppes_medicare"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
