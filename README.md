@@ -1,7 +1,8 @@
 # nppes-nber
 
 ## Overview
-The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER). This package allows users to query the data and store it in a local SQLite database. The data downloading functionality is encapsulated to ensure efficient use and to prevent speed limitations imposed by the NBER website.
+The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER).
+This package allows users to query the data and store it in a local SQLite database. The data downloading functionality is encapsulated to ensure efficient use and to prevent speed limitations imposed by the NBER website.
 
 ## Features
 - **Download NPPES Data**: Private methods for downloading NPPES data files from the NBER website.
@@ -19,10 +20,13 @@ poetry install
 ## Usage
 
 ### Setup
-The package is designed such that the downloading methods are not accessible programmatically by end-users due to speed limitations. The public-facing code focuses on database operations. Developers can use the provided scripts to download and store data.
+The package is designed such that the downloading methods are not accessible programmatically by end-users due to speed limitations.
+The public-facing code focuses on database operations.
+Developers can use the provided scripts to download and store data.
 
 ### Downloading and Storing Data
-Developers should use the `main.py` script to download and store data. This script is not intended for end-users.
+Developers should use the `main.py` script to download and store data.
+This script is not intended for end-users.
 
 #### Example
 ```sh
