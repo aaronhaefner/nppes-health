@@ -1,5 +1,3 @@
-# database.py
-
 import sqlite3
 import pandas as pd
 
@@ -76,6 +74,17 @@ class TestNppesDatabase:
         print(f"Loaded {len(df)} rows from {csv_file}")
         return df
 
+    def load_taxonomy_csv(self, csv_file):
+        encodings = ['utf-8', 'latin1', 'cp1252']
+        for encoding in encodings:
+            try:
+                df = pd.read_csv(csv_file, encoding=encoding)
+                print(f"Loaded {len(df)} rows from {csv_file} with encoding {encoding}")
+                return df
+            except UnicodeDecodeError:
+                print(f"Failed to load {csv_file} with encoding {encoding}")
+        raise UnicodeDecodeError("All encodings failed to decode the CSV file.")
+
     def process_main_data(self, df):
         # Filter data to keep only rows where entity is 1
         df = df[df['entity'] == 1]
@@ -83,11 +92,6 @@ class TestNppesDatabase:
         df = df[COLUMNS_TO_KEEP]
         # Remove duplicates based on the 'npi' column
         df.drop_duplicates(subset=['npi'], inplace=True)
-        return df
-
-    def load_taxonomy_csv(self, csv_file):
-        df = pd.read_csv(csv_file)
-        print(f"Loaded {len(df)} rows from {csv_file}")
         return df
 
     def process_taxonomy_data(self, df, taxonomy_df):
