@@ -4,10 +4,13 @@ import requests
 import os
 
 def _download_file(url, dest_folder):
-    if not os.path.exists(dest_folder):
-        os.makedirs(dest_folder)
+    year = url.split('/')[-2]
+    year_folder = os.path.join(dest_folder, year)
     
-    filename = os.path.join(dest_folder, url.split('/')[-1])
+    if not os.path.exists(year_folder):
+        os.makedirs(year_folder)
+    
+    filename = os.path.join(year_folder, url.split('/')[-1])
     
     response = requests.get(url)
     response.raise_for_status()
