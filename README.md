@@ -1,14 +1,14 @@
 # nppes-nber
 
 ## Overview
-The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER).
-The development of this package is on-going and should not be assumed usable in its current state until noted here.
+The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER). The development of this package is ongoing and should not be assumed usable in its current state until noted here.
 
 ## Features
 - **Download NPPES Data**: Private methods for downloading NPPES data files from the NBER website.
 - **Database Creation**: Methods for creating and managing a local SQLite database.
 - **Data Insertion**: Functions for inserting CSV data into the database.
 - **Querying Data**: Methods for querying the database to explore and analyze data.
+- **Auxiliary Table Creation**: Supports the creation of an auxiliary taxonomy table and the identification of physicians based on taxonomy codes.
 
 ## Installation
 To install the required dependencies, run:
@@ -30,29 +30,11 @@ Developers should use the `main.py` script to download and store data. This scri
 python main.py
 ```
 
+### Loading and Processing Data
+Users can interact with the local SQLite database to load and process the data. The `database.py` script provides the necessary functionality.
+
 ### Querying Data
-Users can interact with the local SQLite database to query and explore the data.
-
-#### Example in IPython
-```ipython
-# Import necessary modules
-import pandas as pd
-from database import NppesDatabase
-
-# Specify the database file
-db_file = "nppes.db"
-db = NppesDatabase(db_file)
-
-# Create a connection to the database
-conn = db._create_connection()
-
-# Query the data
-df = pd.read_sql_query("SELECT * FROM nppes LIMIT 10", conn)
-print(df)
-
-# Close the connection
-db.close_connection()
-```
+Users can interact with the local SQLite database to query and explore the data using methods provided in the `database.py` script.
 
 ## Project Structure
 ```plaintext
@@ -65,6 +47,7 @@ nppes-nber/
 ├── pyproject.toml          # Poetry configuration file
 └── nppes_data/             # Directory for downloaded CSV files
     └── 2007/               # Subfolder for 2007
+    └── taxonomy/           # Subfolder for taxonomy data
 ```
 
 ## Contributing
