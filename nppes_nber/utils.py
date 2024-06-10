@@ -3,7 +3,7 @@
 import requests
 import os
 
-def download_file(url, dest_folder):
+def _download_file(url, dest_folder):
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
     
