@@ -1,8 +1,7 @@
 # nppes-nber
 
 ## Overview
-The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER).
-This package allows users to query the data and store it in a local SQLite database. The data downloading functionality is encapsulated to ensure efficient use and to prevent speed limitations imposed by the NBER website.
+The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER). This package allows users to query the data and store it in a local SQLite database. The data downloading functionality is encapsulated to ensure efficient use and to prevent speed limitations imposed by the NBER website.
 
 ## Features
 - **Download NPPES Data**: Private methods for downloading NPPES data files from the NBER website.
@@ -20,13 +19,10 @@ poetry install
 ## Usage
 
 ### Setup
-The package is designed such that the downloading methods are not accessible programmatically by end-users due to speed limitations.
-The public-facing code focuses on database operations.
-Developers can use the provided scripts to download and store data.
+The package is designed such that the downloading methods are not accessible programmatically by end-users due to speed limitations. The public-facing code focuses on database operations. Developers can use the provided scripts to download and store data.
 
 ### Downloading and Storing Data
-Developers should use the `main.py` script to download and store data.
-This script is not intended for end-users.
+Developers should use the `main.py` script to download and store data. This script is not intended for end-users.
 
 #### Example
 ```sh
@@ -38,6 +34,7 @@ Users can interact with the local SQLite database to query and explore the data.
 
 #### Example in IPython
 ```ipython
+# Import necessary modules
 import pandas as pd
 from database import NppesDatabase
 
@@ -48,9 +45,11 @@ db = NppesDatabase(db_file)
 # Create a connection to the database
 conn = db._create_connection()
 
-# Query and view the results
+# Query the data
 df = pd.read_sql_query("SELECT * FROM nppes LIMIT 10", conn)
 print(df)
+
+# Close the connection
 db.close_connection()
 ```
 
@@ -64,11 +63,12 @@ nppes-nber/
 ├── README.md               # Project documentation
 ├── pyproject.toml          # Poetry configuration file
 └── nppes_data/             # Directory for downloaded CSV files
+    └── 2007/               # Subfolder for 2007
 ```
 
 ## Contributing
-To contribute to this project, please fork the repository, create a new branch, and submit a pull request.
-For major changes, please open an issue first to discuss what you would like to change.
+To contribute to this project, please fork the repository, create a new branch, and submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 This project is licensed under the MIT License.
+```
