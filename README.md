@@ -1,7 +1,11 @@
 # nppes-nber
 
 ## Overview
-The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER). The development of this package is ongoing and should not be assumed usable in its current state until noted here.
+The `nppes-nber` package provides an interface for working with the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER).
+
+The development of this package is ongoing and should not be assumed usable in its current state until noted here.
+The main utility of this package is that it provides a more accurate view of active healthcare providers in the U.S., especially those who accept Medicare.
+Other packages maintain superior data integrity, such as by keeping institutions in the data, but the focus of this package is to provide a database with a transparent construction process from multiple reliably connected data sources to generate an account of healthcare providers (individuals only).
 
 ## Features
 - **Download NPPES Data**: Private methods for downloading NPPES data files from the NBER website.
