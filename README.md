@@ -6,7 +6,7 @@ I greatly appreciate that the NBER hosts the NPPES data files and makes them ava
 
 The development of this package is ongoing and should not be assumed usable in its current state until noted here.
 The main utility of this package is that its goal is to provide a more nuanced view of active Medicare providers in the U.S. based on multiple reliable sources.
-Other packages maintain superior data integrity, such as by keeping institutions in the data, but the focus of this package is to provide a database with a transparent construction process from multiple reliably connected data sources to generate an account of healthcare providers (individuals only).
+Other packages maintain data integrity, such as by keeping institutions in the data, but the focus of this package is to provide a database with a transparent construction process from multiple reliably connected data sources to generate an account of healthcare providers (individuals only).
 
 ## Features
 - **Download NPPES Data**: Private methods for downloading NPPES data files from the NBER website.
