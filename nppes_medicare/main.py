@@ -13,7 +13,7 @@ def process_and_store_nppes_data(npi_csv_file, taxonomy_csv_file, db_file, test=
     taxonomy_data_df = process_taxonomy_data(taxonomy_df)
     db.insert_taxonomy_data(taxonomy_data_df)
 
-    # medicare_df = load_csv_to_dataframe(medicare_csv_file, test)
+    medicare_df = load_csv_to_dataframe(medicare_csv_file, test)
     # medicare_data_df = process_medicare_data(medicare_df)
     # db.insert_medicare_data(medicare_data_df)
 
