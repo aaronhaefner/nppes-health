@@ -87,13 +87,13 @@ def process_taxonomy_data(taxonomy_df):
 
 def process_medicare_data(df):
     df.columns = df.columns.str.lower()
-    
+
     # Individuals only
     df = df[df['rndrng_prvdr_ent_cd'] == "I"].copy()
     df['mdcr_provider'] = (df['rndrng_prvdr_mdcr_prtcptg_ind'] == "Y").astype(int)
-    
+
     df.drop_duplicates(subset=['rndrng_npi'], inplace=True)
     df = df[['rndrng_npi', 'mdcr_provider']].copy()
     df.rename(columns={'rndrng_npi': 'npi'}, inplace=True)
-    
+
     return df

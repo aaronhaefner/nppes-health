@@ -50,7 +50,7 @@ nppes-nber/
 ├── main.py                 # Entry point for script
 ├── README.md               # Project documentation
 ├── pyproject.toml          # Poetry configuration file
-└── nppes_data/             # Directory for downloaded CSV files
+└── input/                  # Directory for downloaded CSV files
     └── 2007/               # Subfolder for 2007
     └── taxonomy/           # Subfolder for taxonomy data
 ```
