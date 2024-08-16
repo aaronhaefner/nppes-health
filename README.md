@@ -1,4 +1,4 @@
-# nppes-medicare
+# nppes-health
 
 ## Overview
 The `nppes-medicare` package assembles the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER) into a database of active Medicare providers in the U.S. across time.
