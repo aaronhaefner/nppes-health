@@ -42,8 +42,7 @@ def load_csv_to_df(csv_file: str, encoding: str='utf-8', test: bool=False):
                 csv_file,
                 nrows=nrows,
                 encoding=encoding,
-                low_memory=False
-            )
+                low_memory=False)
             print(f"Loaded {len(df)} rows from {csv_file}")
             return df
         except UnicodeDecodeError:
