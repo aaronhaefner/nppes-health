@@ -1,8 +1,12 @@
-from global_variables import MAIN_TABLE_COLS_MAPPING
-import pandas as pd
-import requests
+# Description: Utility functions for data loading and processing of NPPES data
 import os
+import requests
+import pandas as pd
+from global_variables import MAIN_TABLE_COLS_MAPPING
 
+# automate downloading from https://download.cms.gov/nppes/NPI_Files.html
+# can load the above and get the latest link
+# https://download.cms.gov/nppes/NPPES_Data_Dissemination_August_2024.zip
 def download_file(url, dest_folder):
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
@@ -15,7 +19,18 @@ def download_file(url, dest_folder):
     return local_filename
 
 
-def load_csv_to_dataframe(csv_file, encoding='utf-8', test=False):
+def load_csv_to_df(csv_file: str, encoding: str='utf-8', test: bool=False):
+    """
+    Load NPPES CSV file to a pandas DataFrame
+
+    Args:
+        csv_file (str): Path to the CSV file
+        encoding (str): Encoding of the CSV file
+        test (bool): Load only a subset of the data for testing
+    
+    Returns:
+        pd.DataFrame: Loaded DataFrame
+    """
     encodings = [encoding, 'latin1', 'cp1252']
     for encoding in encodings:
         try:
@@ -23,24 +38,68 @@ def load_csv_to_dataframe(csv_file, encoding='utf-8', test=False):
                 nrows = 100000
             else:
                 nrows = 1e10
-            df = pd.read_csv(csv_file, nrows=nrows, encoding=encoding, low_memory=False)
-            print(f"Loaded {len(df)} rows from {csv_file} with encoding {encoding}")
+            df = pd.read_csv(
+                csv_file,
+                nrows=nrows,
+                encoding=encoding,
+                low_memory=False
+            )
+            print(f"Loaded {len(df)} rows from {csv_file}")
             return df
         except UnicodeDecodeError:
             print(f"Failed to load {csv_file} with encoding {encoding}")
     raise UnicodeDecodeError("All encodings failed to decode the CSV file.")
 
 
-def process_main_data(df, columns_to_keep):
-    df = df[df['Entity Type Code'] == 1]
-    # map columns with MAIN_TABLE_COLS_MAPPING
-    df = df.rename(columns=MAIN_TABLE_COLS_MAPPING)
-    df = df[columns_to_keep]
+def process_inst_data(df: pd.DataFrame, cols: list=None) -> pd.DataFrame:
+    """
+    Process NPPES data for organizations/institutions, not individual providers
+
+    Args:
+        df (pd.DataFrame): NPPES DataFrame
+        cols (list): Columns to keep in the processed DataFrame
+
+    Returns:
+        pd.DataFrame: Processed DataFrame
+    """
+    # Filter out individuals
+    df = df[df['Entity Type Code'] == 2]
+    if cols is not None:
+        df = df.rename(columns=MAIN_TABLE_COLS_MAPPING)
+        df = df[cols]
     df.drop_duplicates(subset=['npi'], inplace=True)
     return df
 
 
-def assign_np_type(df):
+def process_indiv_data(df: pd.DataFrame, cols: list) -> pd.DataFrame:
+    """
+    Process NPPES data for individual providers, not organizations/institutions
+
+    Args:
+        df (pd.DataFrame): NPPES DataFrame
+        cols (list): Columns to keep in the processed DataFrame
+
+    Returns:
+        pd.DataFrame: Processed DataFrame
+    """
+    # Filter out non-individuals
+    df = df[df['Entity Type Code'] == 1]
+    df = df.rename(columns=MAIN_TABLE_COLS_MAPPING)
+    df = df[cols]
+    df.drop_duplicates(subset=['npi'], inplace=True)
+    return df
+
+
+def assign_np_type(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Assign nurse practitioner types based on taxonomy codes
+    
+    Args:
+        df (pd.DataFrame): DataFrame with 'ptaxcode' column
+        
+    Returns:
+        pd.DataFrame: Updated DataFrame with 'np_type' and 'np' columns
+    """
     # Define mapping for tax codes to np_type
     np_type_mapping = {
         "363L00000X": "Nursing Practice",
@@ -57,25 +116,45 @@ def assign_np_type(df):
     # Define additional categories using .isin()
     pediatric_codes = ["363LP0200X", "363LS0200X"]
     maternal_neonatal_codes = ["363LX0001X", "363LN0000X", "363LP1700X"]
-    adult_health_codes = ["363LA2200X", "363LC1500X", "363LX0106X", "363LW0102X"]
+    adult_health_codes = ["363LA2200X",
+                          "363LC1500X",
+                          "363LX0106X",
+                          "363LW0102X"]
     critical_care_codes = ["363LC0200X", "363LN0005X", "363LP0222X"]
 
     # Update np_type based on these lists
     df.loc[df['ptaxcode'].isin(pediatric_codes), 'np_type'] = "Pediatric"
-    df.loc[df['ptaxcode'].isin(maternal_neonatal_codes), 'np_type'] = "Maternal/Neonatal"
-    df.loc[df['ptaxcode'].isin(adult_health_codes), 'np_type'] = "Adult Health"
-    df.loc[df['ptaxcode'].isin(critical_care_codes), 'np_type'] = "Critical Care"
+    df.loc[df['ptaxcode'].isin(
+        maternal_neonatal_codes), 'np_type'] = "Maternal/Neonatal"
+    df.loc[df['ptaxcode'].isin(
+        adult_health_codes), 'np_type'] = "Adult Health"
+    df.loc[df['ptaxcode'].isin(
+        critical_care_codes), 'np_type'] = "Critical Care"
     df['np'] = df['np_type'].notnull().astype(int)
 
     return df
 
 
-def process_taxonomy_data(taxonomy_df):
-    df = taxonomy_df[['Code', 'Type']].copy()
+def process_taxonomy_data(taxonomy_df: pd.DataFrame, year: int=2024):
+    """
+    Process occupational taxonomy data for a given year
+
+    Args:
+        taxonomy_df (pd.DataFrame): DataFrame with taxonomy data
+        year (int): Year of the taxonomy data
+
+    Returns:
+        pd.DataFrame: Processed DataFrame with new taxonomy columns
+    """
+    if year != 2024:
+        raise ValueError("Only 2024 taxonomy data is supported.")
+    grouping_var = 'Grouping'
+    df = taxonomy_df[['Code', grouping_var]].copy()
     df = df.drop(0) # copyright
 
     # Add physician and student indicators
-    df['physician'] = df['Type'].apply(lambda x: 1 if 'Allopathic & Osteopathic Physicians' in str(x) else 0)
+    df['physician'] = df[grouping_var].apply(
+        lambda x: 1 if 'Allopathic & Osteopathic Physicians' in str(x) else 0)
     df['student'] = df['Code'].apply(lambda x: 1 if x == "390200000X" else 0)
     df.rename(columns={'Code': 'ptaxcode'}, inplace=True)
 
@@ -85,12 +164,16 @@ def process_taxonomy_data(taxonomy_df):
     return df
 
 
-def process_medicare_data(df):
+def process_medicare_data(df: pd.DataFrame):
+    """
+    Pass for now
+    """
     df.columns = df.columns.str.lower()
 
     # Individuals only
     df = df[df['rndrng_prvdr_ent_cd'] == "I"].copy()
-    df['mdcr_provider'] = (df['rndrng_prvdr_mdcr_prtcptg_ind'] == "Y").astype(int)
+    df['mdcr_provider'] = (
+        df['rndrng_prvdr_mdcr_prtcptg_ind'] == "Y").astype(int)
 
     df.drop_duplicates(subset=['rndrng_npi'], inplace=True)
     df = df[['rndrng_npi', 'mdcr_provider']].copy()
