@@ -1,19 +1,18 @@
 # nppes-health
 
 ## Overview
-The `nppes-medicare` package assembles the National Plan and Provider Enumeration System (NPPES) historical monthly files available from the National Bureau of Economic Research (NBER) into a database of active Medicare providers in the U.S. across time.
-I greatly appreciate that the NBER hosts the NPPES data files and makes them available for researchers or otherwise.
+The `nppes-health` package assembles the National Plan and Provider Enumeration System (NPPES) data files available from the NPPES into a SQL database for quick implementation in various data science applications in healthcare.
 
 The development of this package is ongoing and should not be assumed usable in its current state until noted here.
-The main utility of this package is that its goal is to provide a more nuanced view of active Medicare providers in the U.S. based on multiple reliable sources.
-Other packages maintain data integrity, such as by keeping institutions in the data, but the focus of this package is to provide a database with a transparent construction process from multiple reliably connected data sources to generate an account of healthcare providers (individuals only).
+The main utility of this package is that its goal is to provide a more nuanced view of active healthcare providers in the U.S. based on multiple reliable sources.
+Currently the package is only developed for individuals but institutional/organizational provider functionality is being developed.
 
 ## Features
-- **Download NPPES Data**: Private methods for downloading NPPES data files from the NBER website.
+- **Download NPPES Data**: Method for downloading NPPES data files
 - **Database Creation**: Methods for creating and managing a local SQLite database.
 - **Data Insertion**: Functions for inserting CSV data into the database.
 - **Querying Data**: Methods for querying the database to explore and analyze data.
-- **Auxiliary Table Creation**: Supports the creation of an auxiliary taxonomy table and the identification of physicians based on taxonomy codes.
+- **Auxiliary Table Creation**: Supports the creation of an auxiliary taxonomy table and the identification of various healthcare provider types.
 
 ## Installation
 To install the required dependencies, run:
@@ -51,8 +50,6 @@ nppes-nber/
 ├── README.md               # Project documentation
 ├── pyproject.toml          # Poetry configuration file
 └── input/                  # Directory for downloaded CSV files
-    └── 2007/               # Subfolder for 2007
-    └── taxonomy/           # Subfolder for taxonomy data
 ```
 
 ## Contributing
