@@ -2,9 +2,9 @@
 import os
 import sys
 import pandas as pd
-from database import NppesDatabase
-from global_variables import MAIN_TABLE_COLS_MAPPING, COLS_TO_KEEP
-from utils import load_csv_to_df, process_indiv_data, process_taxonomy_data
+from utils.database import NppesDatabase
+from utils.global_variables import MAIN_TABLE_COLS_MAPPING, COLS_TO_KEEP
+from utils.utils import load_csv_to_df, process_indiv_data, process_taxonomy_data
 
 
 def nppes_table(npi_csv_file: str,
