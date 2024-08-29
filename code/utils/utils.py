@@ -1,9 +1,19 @@
-"""Utility functions for data loading and processing of NPPES data."""
+"""Utility functions for data loading and processing of NPPES using PySpark."""
 import os
 import requests
-import pandas as pd
 from lxml import html
 from utils.global_variables import MAIN_TABLE_COLS_MAPPING
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import col, when, udf
+from pyspark.sql.types import StringType
+from typing import List
+
+# Initialize Spark session
+spark = (
+    SparkSession.builder.appName("DataProcessing")
+    .master("local[*]")
+    .getOrCreate()
+)
 
 
 def download_file(url: str, dest_folder: str) -> str:
@@ -55,83 +65,74 @@ def download_latest_nppes_data(url: str, dest_folder: str) -> str:
     return download_file(download_url, dest_folder)
 
 
-def load_csv_to_df(
-    csv_file: str, encoding: str = "utf-8", test: bool = False
-) -> pd.DataFrame:
-    """Load NPPES CSV file to a pandas DataFrame.
+def load_csv_to_df(csv_file: str, test: bool = False) -> DataFrame:
+    """Load NPPES CSV file to a Spark DataFrame.
 
     Args:
         csv_file (str): Path to the CSV file
-        encoding (str): Encoding of the CSV file
-        test (bool): Load only a subset of the data for testing
+        test (bool): Whether to load a sample of the data
 
     Returns:
-        pd.DataFrame: Loaded DataFrame
+        DataFrame: Spark DataFrame containing the loaded data
     """
-    encodings = [encoding, "latin1", "cp1252"]
-    for encoding in encodings:
-        try:
-            if test:
-                nrows = 100000
-            else:
-                nrows = 1e10
-            df = pd.read_csv(
-                csv_file, nrows=nrows, encoding=encoding, low_memory=False
-            )
-            print(f"Loaded {len(df)} rows from {csv_file}")
-            return df
-        except UnicodeDecodeError:
-            print(f"Failed to load {csv_file} with encoding {encoding}")
-    raise UnicodeDecodeError("All encodings failed to decode the CSV file.")
+    if test:
+        df = spark.read.csv(
+            csv_file, header=True, inferSchema=True, samplingRatio=0.01
+        )
+    else:
+        df = spark.read.csv(csv_file, header=True, inferSchema=True)
+
+    print(f"Loaded {df.count()} rows from {csv_file}")
+    return df
 
 
-def process_inst_data(df: pd.DataFrame, cols: list = None) -> pd.DataFrame:
+def process_inst_data(df: DataFrame, cols: List[str] = None) -> DataFrame:
     """Process NPPES data for organizations, not individual providers.
 
     Args:
-        df (pd.DataFrame): NPPES DataFrame
-        cols (list): Columns to keep in the processed DataFrame
+        df (DataFrame): Input DataFrame containing NPPES data
+        cols (List[str]): List of columns to select from the DataFrame
 
     Returns:
-        pd.DataFrame: Processed DataFrame
+        DataFrame: Processed DataFrame containing the selected columns
     """
-    # Filter out individuals
-    df = df[df["Entity Type Code"] == 2]
+    df = df.filter(col("Entity Type Code") == 2)
     if cols is not None:
-        df = df.rename(columns=MAIN_TABLE_COLS_MAPPING)
-        df = df[cols]
-    df.drop_duplicates(subset=["npi"], inplace=True)
+        df = df.select(
+            [col(c).alias(MAIN_TABLE_COLS_MAPPING.get(c, c)) for c in cols]
+        )
+    df = df.dropDuplicates(subset=["npi"])
     return df
 
 
-def process_indiv_data(df: pd.DataFrame, cols: list) -> pd.DataFrame:
+def process_indiv_data(df: DataFrame, cols: List[str]) -> DataFrame:
     """Process NPPES data for individual providers.
 
     Args:
-        df (pd.DataFrame): NPPES DataFrame
-        cols (list): Columns to keep in the processed DataFrame
+        df (DataFrame): Input DataFrame containing NPPES data
+        cols (List[str]): List of columns to select from the DataFrame
 
     Returns:
-        pd.DataFrame: Processed DataFrame
+        DataFrame: Processed Spark DataFrame containing the selected cols
     """
-    # Filter out non-individuals
-    df = df[df["Entity Type Code"] == 1]
-    df = df.rename(columns=MAIN_TABLE_COLS_MAPPING)
-    df = df[cols]
-    df.drop_duplicates(subset=["npi"], inplace=True)
+    df = df.filter(col("Entity Type Code") == 1)
+    df = df.select(
+        [col(c).alias(MAIN_TABLE_COLS_MAPPING.get(c, c)) for c in cols]
+    )
+    df = df.dropDuplicates(subset=["npi"])
     return df
 
 
-def assign_np_type(df: pd.DataFrame) -> pd.DataFrame:
+def assign_np_type(df: DataFrame) -> DataFrame:
     """Assign nurse practitioner types based on taxonomy codes.
 
     Args:
-        df (pd.DataFrame): DataFrame with 'ptaxcode' column
+        df (DataFrame): Input DataFrame containing the taxonomy codes
+
 
     Returns:
-        pd.DataFrame: Updated DataFrame with 'np_type' and 'np' columns
+        DataFrame: DataFrame with nurse practitioner types assigned
     """
-    # Define mapping for tax codes to np_type
     np_type_mapping = {
         "363L00000X": "Nursing Practice",
         "363LA2100X": "Acute Care",
@@ -140,11 +141,9 @@ def assign_np_type(df: pd.DataFrame) -> pd.DataFrame:
         "363LP2300X": "Primary Care",
         "363LP0808X": "Psychiatric",
     }
+    np_type_udf = udf(lambda x: np_type_mapping.get(x), StringType())
+    df = df.withColumn("np_type", np_type_udf(col("ptaxcode")))
 
-    # Apply the mapping
-    df["np_type"] = df["ptaxcode"].map(np_type_mapping)
-
-    # Define additional categories using .isin()
     pediatric_codes = ["363LP0200X", "363LS0200X"]
     maternal_neonatal_codes = ["363LX0001X", "363LN0000X", "363LP1700X"]
     adult_health_codes = [
@@ -155,63 +154,118 @@ def assign_np_type(df: pd.DataFrame) -> pd.DataFrame:
     ]
     critical_care_codes = ["363LC0200X", "363LN0005X", "363LP0222X"]
 
-    # Update np_type based on these lists
-    df.loc[df["ptaxcode"].isin(pediatric_codes), "np_type"] = "Pediatric"
-    df.loc[
-        df["ptaxcode"].isin(maternal_neonatal_codes), "np_type"
-    ] = "Maternal/Neonatal"
-    df.loc[df["ptaxcode"].isin(adult_health_codes), "np_type"] = "Adult Health"
-    df.loc[
-        df["ptaxcode"].isin(critical_care_codes), "np_type"
-    ] = "Critical Care"
-    df["np"] = df["np_type"].notnull().astype(int)
+    df = df.withColumn(
+        "np_type",
+        when(col("ptaxcode").isin(pediatric_codes), "Pediatric")
+        .when(
+            col("ptaxcode").isin(maternal_neonatal_codes), "Maternal/Neonatal"
+        )
+        .when(col("ptaxcode").isin(adult_health_codes), "Adult Health")
+        .when(col("ptaxcode").isin(critical_care_codes), "Critical Care")
+        .otherwise(col("np_type")),
+    )
+
+    df = df.withColumn("np", when(col("np_type").isNotNull(), 1).otherwise(0))
 
     return df
 
 
 def process_taxonomy_data(
-    taxonomy_df: pd.DataFrame, year: int = 2024
-) -> pd.DataFrame:
+    taxonomy_df: DataFrame, year: int = 2024
+) -> DataFrame:
     """Process occupational taxonomy data for a given year.
 
     Args:
-        taxonomy_df (pd.DataFrame): DataFrame with taxonomy data
+        taxonomy_df (DataFrame): Input DataFrame containing the taxonomy data
         year (int): Year of the taxonomy data
 
     Returns:
-        pd.DataFrame: Processed DataFrame with new taxonomy columns
+        DataFrame: Processed DataFrame containing the taxonomy data
     """
     if year != 2024:
         raise ValueError("Only 2024 taxonomy data is supported.")
+
     grouping_var = "Grouping"
-    df = taxonomy_df[["Code", grouping_var]].copy()
-    df = df.drop(0)  # copyright
+    df = taxonomy_df.select("Code", grouping_var)
+    df = df.filter(col("Code") != "Code")  # Remove header row
 
-    # Add physician and student indicators
-    df["physician"] = df[grouping_var].apply(
-        lambda x: 1 if "Allopathic & Osteopathic Physicians" in str(x) else 0
+    df = df.withColumn(
+        "physician",
+        when(
+            col(grouping_var).contains("Allopathic & Osteopathic Physicians"), 1
+        ).otherwise(0),
     )
-    df["student"] = df["Code"].apply(lambda x: 1 if x == "390200000X" else 0)
-    df.rename(columns={"Code": "ptaxcode"}, inplace=True)
+    df = df.withColumn(
+        "student", when(col("Code") == "390200000X", 1).otherwise(0)
+    )
 
-    # Assign taxonomy codes to nurse practitioner types
+    df = df.withColumnRenamed("Code", "ptaxcode")
     df = assign_np_type(df)
 
     return df
 
 
-def process_medicare_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Pass for now."""
-    df.columns = df.columns.str.lower()
+def process_medicare_data(df: DataFrame) -> DataFrame:
+    """Process Medicare data for individual providers.
 
-    # Individuals only
-    df = df[df["rndrng_prvdr_ent_cd"] == "I"].copy()
-    df["mdcr_provider"] = (df["rndrng_prvdr_mdcr_prtcptg_ind"] == "Y").astype(
-        int
+    Args:
+        df (DataFrame): Input DataFrame containing the Medicare data
+
+    Returns:
+        DataFrame: Processed DataFrame containing the Medicare data
+    """
+    df = df.select([col(c).alias(c.lower()) for c in df.columns])
+
+    df = df.filter(col("rndrng_prvdr_ent_cd") == "I")
+    df = df.withColumn(
+        "mdcr_provider",
+        when(col("rndrng_prvdr_mdcr_prtcptg_ind") == "Y", 1).otherwise(0),
     )
 
-    df.drop_duplicates(subset=["rndrng_npi"], inplace=True)
-    df = df[["rndrng_npi", "mdcr_provider"]].copy()
-    df.rename(columns={"rndrng_npi": "npi"}, inplace=True)
+    df = df.dropDuplicates(subset=["rndrng_npi"])
+    df = df.select(col("rndrng_npi").alias("npi"), "mdcr_provider")
 
     return df
+
+
+def save_as_parquet(df: DataFrame, output_path: str) -> None:
+    """Save DataFrame as parquet file.
+
+    Args:
+        df (DataFrame): Input DataFrame to save
+        output_path (str): Path to save the DataFrame as parquet file
+
+    Returns: None
+    """
+    df.write.mode("overwrite").parquet(output_path)
+
+
+# Main processing pipeline
+def process_and_save_data(input_csv: str, output_folder: str) -> None:
+    """Process NPPES data and save as parquet files.
+
+    Args:
+        input_csv (str): Path to the input CSV file
+        output_folder (str): Path to the output folder to save the parquet files
+
+    Returns: None
+    """
+    df = load_csv_to_df(input_csv)
+
+    inst_df = process_inst_data(df)
+    save_as_parquet(inst_df, os.path.join(output_folder, "institutions"))
+
+    indiv_df = process_indiv_data(df, list(MAIN_TABLE_COLS_MAPPING.keys()))
+    save_as_parquet(indiv_df, os.path.join(output_folder, "individuals"))
+
+    taxonomy_df = process_taxonomy_data(df)
+    save_as_parquet(taxonomy_df, os.path.join(output_folder, "taxonomy"))
+
+    medicare_df = process_medicare_data(df)
+    save_as_parquet(medicare_df, os.path.join(output_folder, "medicare"))
+
+
+if __name__ == "__main__":
+    input_csv = "../input/nppes_data.csv"
+    output_folder = "../output/"
+    process_and_save_data(input_csv, output_folder)

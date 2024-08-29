@@ -8,14 +8,32 @@ CONDA_ENV := spark
 PYTHON_VERSION := 3.12
 PACKAGES := pyspark pyarrow requests ipython jupyterlab pandas pre-commit ruff black
 
+# Java and Spark variables
+JAVA_VERSION := 11
+SPARK_VERSION := 3.5.0
+HADOOP_VERSION := 3
+
 # Recipes
 $(REQUIREMENTS):
 	$(MAKE) setup
 
-.PHONY: setup install-requirements activate clean recreate run setup-pre-commit run-pre-commit
+.PHONY: setup install-requirements activate clean recreate run setup-pre-commit run-pre-commit install-java install-spark
+
+# Install Java
+install-java:
+	@echo "Installing Java $(JAVA_VERSION)..."
+	brew install openjdk@$(JAVA_VERSION)
+	@echo "export JAVA_HOME=$$(/usr/libexec/java_home -v $(JAVA_VERSION))" >> ~/.zshrc
+	@echo "Java $(JAVA_VERSION) installed. Please restart your terminal or run 'source ~/.zshrc' to update your environment."
+
+# Install Apache Spark
+install-spark:
+	@echo "Installing Apache Spark $(SPARK_VERSION)..."
+	brew install apache-spark
+	@echo "Apache Spark $(SPARK_VERSION) installed."
 
 # Create the conda environment and install the required packages
-setup:
+setup: install-java install-spark
 	conda init bash
 	conda create -n $(CONDA_ENV) python=$(PYTHON_VERSION) -y
 	@echo "Conda environment '$(CONDA_ENV)' created. To activate, run: make activate"
