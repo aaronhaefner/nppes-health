@@ -6,7 +6,7 @@ all: requirements.txt
 REQUIREMENTS := requirements.txt
 CONDA_ENV := spark
 PYTHON_VERSION := 3.12
-PACKAGES := pyspark pyarrow requests ipython jupyterlab pandas pre-commit ruff black
+PACKAGES := pyspark pyarrow requests ipython jupyterlab pandas lxml pre-commit ruff black
 
 # Java and Spark variables
 JAVA_VERSION := 11
@@ -37,11 +37,9 @@ setup: install-java install-spark
 	conda init bash
 	conda create -n $(CONDA_ENV) python=$(PYTHON_VERSION) -y
 	$(MAKE) activate
-	@echo "Then, to install packages, run: make install-packages"
+	source $$(conda info --base)/etc/profile.d/conda.sh && conda activate $(CONDA_ENV)
+	$(MAKE) install-packages
 
-activate:
-	@echo "To activate the conda environment, run the following command in your shell:"
-	@echo "source $$(conda info --base)/etc/profile.d/conda.sh && conda activate $(CONDA_ENV)"
 
 install-packages:
 	@echo "Activating conda environment '$(CONDA_ENV)' and installing packages..."
