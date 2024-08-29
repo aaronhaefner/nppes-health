@@ -48,6 +48,7 @@ dependencies:
   - entrypoints=0.4
   - exceptiongroup=1.2.2
   - executing=2.0.1
+  - expat=2.6.2
   - fqdn=1.5.1
   - gflags=2.2.2
   - glog=0.7.1
@@ -98,6 +99,7 @@ dependencies:
   - libedit=3.1.20191231
   - libev=4.33
   - libevent=2.1.12
+  - libexpat=2.6.2
   - libffi=3.4.4
   - libgfortran=5.0.0
   - libgfortran5=13.2.0
@@ -156,12 +158,12 @@ dependencies:
   - pyobjc-framework-cocoa=10.3.1
   - pysocks=1.7.1
   - pyspark=3.5.1
-  - python=3.10.13
+  - python=3.12.2
   - python-dateutil=2.9.0
   - python-fastjsonschema=2.20.0
   - python-json-logger=2.0.7
   - python-tzdata=2024.1
-  - python_abi=3.10
+  - python_abi=3.12
   - pytz=2024.1
   - pyyaml=6.0.2
   - pyzmq=26.2.0
