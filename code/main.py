@@ -1,17 +1,20 @@
-# Description: Main script to run the NPPES pipeline
+"""Main entry point for the NPPES data processing application."""
 import os
-import sys
 import pandas as pd
 from utils.database import NppesDatabase
-from utils.global_variables import MAIN_TABLE_COLS_MAPPING, COLS_TO_KEEP
-from utils.utils import download_file, download_latest_nppes_data, load_csv_to_df, process_indiv_data, process_taxonomy_data
+from utils.global_variables import COLS_TO_KEEP
+from utils.utils import (
+    download_latest_nppes_data,
+    load_csv_to_df,
+    process_indiv_data,
+    process_taxonomy_data,
+)
 
 
-def nppes_table(npi_csv_file: str,
-                cols: list,
-                test: bool = False) -> pd.DataFrame:
-    """
-    Load and process NPPES main data
+def nppes_table(
+    npi_csv_file: str, cols: list, test: bool = False
+) -> pd.DataFrame:
+    """Load and process NPPES main data.
 
     Args:
         npi_csv_file (str): Path to the NPI CSV file
@@ -25,8 +28,7 @@ def nppes_table(npi_csv_file: str,
 
 
 def taxonomy_table(taxonomy_csv_file: str, test: bool = False) -> pd.DataFrame:
-    """
-    Load and process NPPES taxonomy data
+    """Load and process NPPES taxonomy data.
 
     Args:
         taxonomy_csv_file (str): Path to the taxonomy CSV file
@@ -38,12 +40,10 @@ def taxonomy_table(taxonomy_csv_file: str, test: bool = False) -> pd.DataFrame:
     return process_taxonomy_data(load_csv_to_df(taxonomy_csv_file))
 
 
-def nppes_pipeline(npi_csv_file: str,
-                   taxonomy_csv_file: str,
-                   db_file:str,
-                   test: bool = False) -> None:
-    """
-    NPPES pipeline to load and process NPPES data and insert into SQL database
+def nppes_pipeline(
+    npi_csv_file: str, taxonomy_csv_file: str, db_file: str, test: bool = False
+) -> None:
+    """Pipeline to load and process NPPES data.
 
     Args:
         npi_csv_file (str): Path to the NPI CSV file
@@ -60,8 +60,7 @@ def nppes_pipeline(npi_csv_file: str,
 
 
 def files_by_year(year: int) -> tuple:
-    """
-    Get the NPI and taxonomy CSV files for a given year
+    """Get the NPI and taxonomy CSV files for a given year.
 
     Args:
         year (int): Year to get the files for
@@ -73,13 +72,12 @@ def files_by_year(year: int) -> tuple:
 
 
 def main(year: int, db_file: str = None):
-    """
-    Main function to run the NPPES pipeline
-    
+    """Main function to run the NPPES pipeline.
+
     Args:
         year (int): Year of the NPPES data
         db_file (str): Path to the SQLite database file
-    
+
     Returns: None
     """
     if os.path.exists(db_file):
@@ -99,16 +97,21 @@ if __name__ == "__main__":
         year = int(local_filename.split("_")[-1].split(".")[0])
         assert int(year) == 2024
 
-        # Find files starting with npidata, select the one that does not contain "fileheader"
+        # Rename data and header files
         npi_files = [f for f in os.listdir(source) if f.startswith("npidata")]
         npi_file = [f for f in npi_files if "fileheader" not in f]
         header_file = [f for f in npi_files if "fileheader" in f]
-        
-        os.rename(os.path.join(source, npi_file[0]), os.path.join(source, f"npi_{year}.csv"))
-        os.rename(os.path.join(source, header_file[0]), os.path.join(source, f"npi_header_{year}.csv"))
+
+        os.rename(
+            os.path.join(source, npi_file[0]),
+            os.path.join(source, f"npi_{year}.csv"),
+        )
+        os.rename(
+            os.path.join(source, header_file[0]),
+            os.path.join(source, f"npi_header_{year}.csv"),
+        )
 
         print("NPPES data downloaded and extracted successfully")
-
 
     # year = 2024
     # db_file = "../output/nppes.db"

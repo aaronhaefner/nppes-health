@@ -18,9 +18,9 @@ schema = {
                 "npideactdate": "TEXT",
                 "npireactdate": "TEXT",
                 "pgender": "TEXT",
-                "ptaxcode": "TEXT"
+                "ptaxcode": "TEXT",
             },
-            "primary_key": "npi"
+            "primary_key": "npi",
         },
         "taxonomy": {
             "columns": {
@@ -29,17 +29,14 @@ schema = {
                 "student": "INTEGER",
                 "np_type": "TEXT",
                 "np": "INTEGER",
-                "Type": "TEXT"
+                "Type": "TEXT",
             },
-            "primary_key": "ptaxcode"
+            "primary_key": "ptaxcode",
         },
         "medicare": {
-            "columns": {
-                "npi": "TEXT",
-                "mdcr_provider": "INTEGER"
-            },
-            "primary_key": "npi"
-        }
+            "columns": {"npi": "TEXT", "mdcr_provider": "INTEGER"},
+            "primary_key": "npi",
+        },
     }
 }
 

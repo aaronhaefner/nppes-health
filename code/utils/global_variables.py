@@ -16,13 +16,23 @@ MAIN_TABLE_COLS_MAPPING = {
     "NPI Deactivation Date": "npideactdate",
     "NPI Reactivation Date": "npireactdate",
     "Provider Gender Code": "pgender",
-    "Healthcare Provider Taxonomy Code_1": "ptaxcode"
+    "Healthcare Provider Taxonomy Code_1": "ptaxcode",
 }
 
 COLS_TO_KEEP = [
-    'npi', 'entity', 'replacement_npi', 'ein', 'porgname', 'pcredential',
-    'plocstatename', 'ploczip',
-    'penumdate', 'lastupdate', 'npideactreason', 'npideactdate', 
-    'npireactdate', 'pgender', 'ptaxcode'
+    "npi",
+    "entity",
+    "replacement_npi",
+    "ein",
+    "porgname",
+    "pcredential",
+    "plocstatename",
+    "ploczip",
+    "penumdate",
+    "lastupdate",
+    "npideactreason",
+    "npideactdate",
+    "npireactdate",
+    "pgender",
+    "ptaxcode",
 ]
-

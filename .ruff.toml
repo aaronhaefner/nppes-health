@@ -2,5 +2,12 @@ line-length = 80
 target-version = "py312"
 select = ["B", "C", "E", "F", "W", "D"]
 
+exclude = [
+    "__init__.py",
+    "code/utils/database.py",
+    "code/utils/global_variables.py",
+    "code/utils/gen_schema.py",
+]
+
 [pydocstyle]
 convention = "google"
