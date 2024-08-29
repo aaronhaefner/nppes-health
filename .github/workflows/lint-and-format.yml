@@ -16,7 +16,7 @@ jobs:
       with:
         auto-update-conda: true
         python-version: "3.12"
-        activate-environment: ${{ env.CONDA_ENV }}
+        activate-environment: true
     - name: Install dependencies
       shell: bash -l {0}
       run: |
