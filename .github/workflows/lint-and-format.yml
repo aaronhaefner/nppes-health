@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        pip install -r requirements.txt
+        pip install -r code/requirements.txt
     - name: Run Ruff
       shell: bash -l {0}
       run: ruff check .
