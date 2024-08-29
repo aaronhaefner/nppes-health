@@ -2,7 +2,7 @@
 import os
 import requests
 from lxml import html
-from utils.global_variables import MAIN_TABLE_COLS_MAPPING
+from global_variables import MAIN_TABLE_COLS_MAPPING
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import col, when, udf
 from pyspark.sql.types import StringType
@@ -75,12 +75,9 @@ def load_csv_to_df(csv_file: str, test: bool = False) -> DataFrame:
     Returns:
         DataFrame: Spark DataFrame containing the loaded data
     """
+    df = spark.read.csv(csv_file, header=True, inferSchema=True)
     if test:
-        df = spark.read.csv(
-            csv_file, header=True, inferSchema=True, samplingRatio=0.01
-        )
-    else:
-        df = spark.read.csv(csv_file, header=True, inferSchema=True)
+        df = df.sample(fraction=0.01, seed=42)
 
     print(f"Loaded {df.count()} rows from {csv_file}")
     return df
@@ -228,16 +225,17 @@ def process_medicare_data(df: DataFrame) -> DataFrame:
     return df
 
 
-def save_as_parquet(df: DataFrame, output_path: str) -> None:
+def save_as_parquet(df: DataFrame, output_folder: str, output_dir: str) -> None:
     """Save DataFrame as parquet file.
 
     Args:
         df (DataFrame): Input DataFrame to save
-        output_path (str): Path to save the DataFrame as parquet file
+        output_folder (str): Path to the output folder
+        output_dir (str): Path to save the DataFrame as parquet file
 
     Returns: None
     """
-    df.write.mode("overwrite").parquet(output_path)
+    df.write.mode("overwrite").parquet(os.path.join(output_folder, output_dir))
 
 
 # Main processing pipeline
@@ -250,22 +248,30 @@ def process_and_save_data(input_csv: str, output_folder: str) -> None:
 
     Returns: None
     """
-    df = load_csv_to_df(input_csv)
+    df = load_csv_to_df(input_csv, test=True)
 
-    inst_df = process_inst_data(df)
-    save_as_parquet(inst_df, os.path.join(output_folder, "institutions"))
-
-    indiv_df = process_indiv_data(df, list(MAIN_TABLE_COLS_MAPPING.keys()))
-    save_as_parquet(indiv_df, os.path.join(output_folder, "individuals"))
-
-    taxonomy_df = process_taxonomy_data(df)
-    save_as_parquet(taxonomy_df, os.path.join(output_folder, "taxonomy"))
-
-    medicare_df = process_medicare_data(df)
-    save_as_parquet(medicare_df, os.path.join(output_folder, "medicare"))
+    save_as_parquet(
+        process_inst_data(df), output_folder, output_dir="institutions"
+    )
+    save_as_parquet(
+        process_indiv_data(df, list(MAIN_TABLE_COLS_MAPPING.keys())),
+        output_folder,
+        output_dir="individuals",
+    )
+    save_as_parquet(
+        process_taxonomy_data(
+            load_csv_to_df("../../input/nucc_taxonomy_2024.csv")
+        ),
+        output_folder,
+        output_dir="taxonomy",
+    )
+    # Not fully implemented yet
+    # save_as_parquet(
+    #     process_medicare_data(df), output_folder, output_dir="medicare"
+    # )
 
 
 if __name__ == "__main__":
-    input_csv = "../input/nppes_data.csv"
-    output_folder = "../output/"
+    input_csv = "../../input/npi_2024.csv"
+    output_folder = "../../output/"
     process_and_save_data(input_csv, output_folder)
