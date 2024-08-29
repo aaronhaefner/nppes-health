@@ -8,7 +8,7 @@ CONDA_ENV := spark
 PYTHON_VERSION := 3.12
 
 # Add packages to the list below to install them in the conda environment
-PACKAGES := pyspark pyarrow requests ipython jupyterlab
+PACKAGES := pyspark pyarrow requests ipython jupyterlab lxml pandas
 
 # Recipes
 $(REQUIREMENTS):

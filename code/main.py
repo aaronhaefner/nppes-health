@@ -4,7 +4,7 @@ import sys
 import pandas as pd
 from utils.database import NppesDatabase
 from utils.global_variables import MAIN_TABLE_COLS_MAPPING, COLS_TO_KEEP
-from utils.utils import load_csv_to_df, process_indiv_data, process_taxonomy_data
+from utils.utils import download_file, download_latest_nppes_data, load_csv_to_df, process_indiv_data, process_taxonomy_data
 
 
 def nppes_table(npi_csv_file: str,
@@ -89,6 +89,13 @@ def main(year: int, db_file: str = None):
 
 
 if __name__ == "__main__":
+    # Download the latest NPPES data if it doesn't exist
+    source, dest = ("../input", "../output")
+    if not os.path.exists(source) or os.listdir(source) == []:
+        url = "https://download.cms.gov/nppes/NPI_Files.html"
+        local_filename = download_latest_nppes_data(url, source)
+        os.system(f"unzip {local_filename} -d {source}")
+
     year = 2024
     db_file = "../output/nppes.db"
 

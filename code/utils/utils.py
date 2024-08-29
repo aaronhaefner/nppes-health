@@ -2,16 +2,23 @@
 import os
 import requests
 import pandas as pd
+from lxml import html
 from global_variables import MAIN_TABLE_COLS_MAPPING
 
-# automate downloading from https://download.cms.gov/nppes/NPI_Files.html
-# can load the above and get the latest link
-# https://download.cms.gov/nppes/NPPES_Data_Dissemination_August_2024.zip
-def download_file(url, dest_folder):
-    if not os.path.exists(dest_folder):
-        os.makedirs(dest_folder)
+
+def download_file(url: str, dest_folder: str) -> str:
+    """
+    Download a file from the given URL to the destination folder
+
+    Args:
+        url (str): URL to download the file from
+        dest_folder (str): Destination folder to save the file
+
+    Returns:
+        str: Path to the downloaded file
+    """
     local_filename = os.path.join(dest_folder, url.split('/')[-1])
-    with requests.get(url, stream=True) as r:
+    with requests.get(url, stream=True, timeout=10) as r:
         r.raise_for_status()
         with open(local_filename, 'wb') as f:
             for chunk in r.iter_content(chunk_size=8192):
@@ -19,7 +26,37 @@ def download_file(url, dest_folder):
     return local_filename
 
 
-def load_csv_to_df(csv_file: str, encoding: str='utf-8', test: bool=False):
+def download_latest_nppes_data(url: str, dest_folder: str) -> str:
+    """
+    Download the latest NPPES data from the given URL
+    
+    Args:
+        url (str): URL to download the data from
+        dest_folder (str): Destination folder to save the file
+
+    Returns:
+        str: Path to the downloaded file
+    """
+
+    if not os.path.exists(dest_folder):
+        os.makedirs(dest_folder)
+
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+
+    tree = html.fromstring(response.content)
+    link_tag = tree.xpath("//a[contains(@href, 'NPPES_Data_Dissemination')]/@href")
+
+    if not link_tag:
+        raise ValueError("Couldn't find the download link on the page")
+    
+    print(f"Downloading {link_tag[0]}")
+    download_url = requests.compat.urljoin(url, link_tag[0])
+
+    return download_file(download_url, dest_folder)
+
+
+def load_csv_to_df(csv_file: str, encoding: str='utf-8', test: bool=False ) -> pd.DataFrame:
     """
     Load NPPES CSV file to a pandas DataFrame
 
@@ -134,7 +171,7 @@ def assign_np_type(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def process_taxonomy_data(taxonomy_df: pd.DataFrame, year: int=2024):
+def process_taxonomy_data(taxonomy_df: pd.DataFrame, year: int=2024) -> pd.DataFrame:
     """
     Process occupational taxonomy data for a given year
 
@@ -163,7 +200,7 @@ def process_taxonomy_data(taxonomy_df: pd.DataFrame, year: int=2024):
     return df
 
 
-def process_medicare_data(df: pd.DataFrame):
+def process_medicare_data(df: pd.DataFrame ) -> pd.DataFrame:
     """
     Pass for now
     """
