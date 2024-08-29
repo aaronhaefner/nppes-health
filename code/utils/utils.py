@@ -3,7 +3,7 @@ import os
 import requests
 import pandas as pd
 from lxml import html
-from global_variables import MAIN_TABLE_COLS_MAPPING
+from utils.global_variables import MAIN_TABLE_COLS_MAPPING
 
 
 def download_file(url: str, dest_folder: str) -> str:

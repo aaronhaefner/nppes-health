@@ -95,19 +95,33 @@ if __name__ == "__main__":
         url = "https://download.cms.gov/nppes/NPI_Files.html"
         local_filename = download_latest_nppes_data(url, source)
         os.system(f"unzip {local_filename} -d {source}")
+        # extract year = from ../input/NPPES_Data_Dissemination_August_2024.zip
+        year = int(local_filename.split("_")[-1].split(".")[0])
+        assert int(year) == 2024
 
-    year = 2024
-    db_file = "../output/nppes.db"
+        # Find files starting with npidata, select the one that does not contain "fileheader"
+        npi_files = [f for f in os.listdir(source) if f.startswith("npidata")]
+        npi_file = [f for f in npi_files if "fileheader" not in f]
+        header_file = [f for f in npi_files if "fileheader" in f]
+        
+        os.rename(os.path.join(source, npi_file[0]), os.path.join(source, f"npi_{year}.csv"))
+        os.rename(os.path.join(source, header_file[0]), os.path.join(source, f"npi_header_{year}.csv"))
 
-    # Check if the db file exists and run queries to check the data
-    if os.path.exists(db_file):
-        db = NppesDatabase(db_file)
-        print("Querying nppes table:")
-        db.run_query("SELECT * FROM nppes LIMIT 5")
-        print("\nQuerying taxonomy table:")
-        db.run_query("SELECT * FROM taxonomy LIMIT 5")
-        db.close_connection()
+        print("NPPES data downloaded and extracted successfully")
 
-    # Run the pipeline
-    else:
-        main(year, db_file)
+
+    # year = 2024
+    # db_file = "../output/nppes.db"
+
+    # # Check if the db file exists and run queries to check the data
+    # if os.path.exists(db_file):
+    #     db = NppesDatabase(db_file)
+    #     print("Querying nppes table:")
+    #     db.run_query("SELECT * FROM nppes LIMIT 5")
+    #     print("\nQuerying taxonomy table:")
+    #     db.run_query("SELECT * FROM taxonomy LIMIT 5")
+    #     db.close_connection()
+
+    # # Run the pipeline
+    # else:
+    #     main(year, db_file)
