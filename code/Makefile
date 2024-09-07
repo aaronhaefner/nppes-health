@@ -6,7 +6,7 @@ all: requirements.txt
 REQUIREMENTS := requirements.txt
 CONDA_ENV := spark
 PYTHON_VERSION := 3.12
-PACKAGES := pyspark pyarrow requests ipython jupyterlab pandas lxml pre-commit ruff black pickleshare
+PACKAGES := pyspark pyarrow requests ipython jupyterlab pandas lxml pre-commit ruff black pickleshare openpyxl
 
 # Java, Spark, and Hadoop variables
 JAVA_VERSION := 11

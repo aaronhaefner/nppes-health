@@ -1,12 +1,14 @@
 """Utility functions for data loading and processing of NPPES using PySpark."""
 import os
 import requests
+import pandas as pd
 from lxml import html
 from global_variables import MAIN_TABLE_COLS_MAPPING
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, when, udf
+from pyspark.sql.functions import col, when, udf, to_date
 from pyspark.sql.types import StringType
 from typing import List
+import warnings
 
 # Initialize Spark session
 spark = (
@@ -81,6 +83,78 @@ def load_csv_to_df(csv_file: str, test: bool = False) -> DataFrame:
 
     print(f"Loaded {df.count()} rows from {csv_file}")
     return df
+
+
+def load_excel_to_spark(
+    spark: SparkSession, filename: str, sheet_name: str = None
+) -> DataFrame:
+    """Load Excel file to a Spark DataFrame.
+
+    Args:
+        spark (SparkSession): Spark session
+        filename (str): Path to the Excel file
+        sheet_name (str, optional): Name of the sheet to load.
+        If None, loads the first sheet.
+
+    Returns:
+        DataFrame: Raw Spark DataFrame containing the loaded data
+    """
+    warnings.filterwarnings("ignore", category=UserWarning)
+    try:
+        df = spark.createDataFrame(
+            pd.read_excel(filename, sheet_name=sheet_name)
+        )
+        print(f"Loaded {df.count()} rows from {filename}")
+        return df
+    except Exception as e:
+        print(f"Error loading Excel file: {str(e)}")
+        raise
+    finally:
+        warnings.resetwarnings()
+
+
+def process_deactivations_data(df: DataFrame) -> DataFrame:
+    """Process deactivations data for individual providers.
+
+    Args:
+        df (DataFrame): Raw Spark DataFrame containing the deactivations data
+
+    Returns:
+        DataFrame: Processed DataFrame with standardized columns
+    """
+    df = df.withColumnRenamed(
+        "NPPES Deactivated Records as of Jun 10 2024", "npi"
+    ).withColumnRenamed("Unnamed: 1", "deactivationdate")
+
+    df = df.filter(col("npi") != "NPI")
+
+    df = df.withColumn(
+        "deactivationdate", to_date(col("deactivationdate"), "MM/dd/yyyy")
+    )
+
+    return df
+
+
+def load_and_process_deactivations_data(
+    spark: SparkSession, filename: str
+) -> DataFrame:
+    """Load and process deactivations data for individual providers.
+
+    Args:
+        spark (SparkSession): Spark session
+        filename (str): Path to the deactivations data file
+
+    Returns:
+        DataFrame: Processed DataFrame containing the deactivations data
+    """
+    processed_df = process_deactivations_data(
+        load_excel_to_spark(spark, filename, sheet_name="DeactivatedNPIs")
+    )
+
+    print("Deactivations data processed successfully.")
+    processed_df.show(5)
+
+    return processed_df
 
 
 def process_inst_data(df: DataFrame, cols: List[str] = None) -> DataFrame:
@@ -265,10 +339,13 @@ def process_and_save_data(input_csv: str, output_folder: str) -> None:
         output_folder,
         output_dir="taxonomy",
     )
-    # Not fully implemented yet
-    # save_as_parquet(
-    #     process_medicare_data(df), output_folder, output_dir="medicare"
-    # )
+    save_as_parquet(
+        process_medicare_data(
+            load_csv_to_df("../../input/MUP_PHY_R21_P04_V10_D19_Prov.csv")
+        ),
+        output_folder,
+        output_dir="medicare",
+    )
 
 
 if __name__ == "__main__":
