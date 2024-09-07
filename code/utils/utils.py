@@ -346,6 +346,13 @@ def process_and_save_data(input_csv: str, output_folder: str) -> None:
         output_folder,
         output_dir="medicare",
     )
+    save_as_parquet(
+        load_and_process_deactivations_data(
+            spark, "../../input/NPPES Deactivated NPI Report 20240610.xlsx"
+        ),
+        output_folder,
+        output_dir="deactivations",
+    )
 
 
 if __name__ == "__main__":
