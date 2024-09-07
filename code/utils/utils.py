@@ -10,13 +10,6 @@ from pyspark.sql.types import StringType
 from typing import List
 import warnings
 
-# Initialize Spark session
-spark = (
-    SparkSession.builder.appName("DataProcessing")
-    .master("local[*]")
-    .getOrCreate()
-)
-
 
 def download_file(url: str, dest_folder: str) -> str:
     """Download a file from the given URL to the destination folder.
@@ -67,10 +60,11 @@ def download_latest_nppes_data(url: str, dest_folder: str) -> str:
     return download_file(download_url, dest_folder)
 
 
-def load_csv_to_df(csv_file: str, test: bool = False) -> DataFrame:
+def load_csv_to_df(spark, csv_file: str, test: bool = False) -> DataFrame:
     """Load NPPES CSV file to a Spark DataFrame.
 
     Args:
+        spark (SparkSession): Spark session
         csv_file (str): Path to the CSV file
         test (bool): Whether to load a sample of the data
 
@@ -310,52 +304,3 @@ def save_as_parquet(df: DataFrame, output_folder: str, output_dir: str) -> None:
     Returns: None
     """
     df.write.mode("overwrite").parquet(os.path.join(output_folder, output_dir))
-
-
-# Main processing pipeline
-def process_and_save_data(input_csv: str, output_folder: str) -> None:
-    """Process NPPES data and save as parquet files.
-
-    Args:
-        input_csv (str): Path to the input CSV file
-        output_folder (str): Path to the output folder to save the parquet files
-
-    Returns: None
-    """
-    df = load_csv_to_df(input_csv, test=True)
-
-    save_as_parquet(
-        process_inst_data(df), output_folder, output_dir="institutions"
-    )
-    save_as_parquet(
-        process_indiv_data(df, list(MAIN_TABLE_COLS_MAPPING.keys())),
-        output_folder,
-        output_dir="individuals",
-    )
-    save_as_parquet(
-        process_taxonomy_data(
-            load_csv_to_df("../../input/nucc_taxonomy_2024.csv")
-        ),
-        output_folder,
-        output_dir="taxonomy",
-    )
-    save_as_parquet(
-        process_medicare_data(
-            load_csv_to_df("../../input/MUP_PHY_R21_P04_V10_D19_Prov.csv")
-        ),
-        output_folder,
-        output_dir="medicare",
-    )
-    save_as_parquet(
-        load_and_process_deactivations_data(
-            spark, "../../input/NPPES Deactivated NPI Report 20240610.xlsx"
-        ),
-        output_folder,
-        output_dir="deactivations",
-    )
-
-
-if __name__ == "__main__":
-    input_csv = "../../input/npi_2024.csv"
-    output_folder = "../../output/"
-    process_and_save_data(input_csv, output_folder)
