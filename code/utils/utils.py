@@ -107,6 +107,26 @@ def load_excel_to_spark(
         warnings.resetwarnings()
 
 
+def load_parquet(
+    spark: SparkSession, parquet_path: str, test: bool = False
+) -> DataFrame:
+    """Load a parquet file into a Spark DataFrame.
+
+    Args:
+        spark (SparkSession): Spark session
+        parquet_path (str): Path to the parquet file or directory
+        test (bool): Whether to load a sample of the data (default: False)
+
+    Returns:
+        DataFrame: Spark DataFrame containing the loaded data
+    """
+    df = spark.read.parquet(parquet_path)
+    if test:
+        df = df.sample(fraction=0.01, seed=42)
+    print(f"Loaded {df.count()} rows from {parquet_path}, test={test}")
+    return df
+
+
 def process_deactivations_data(df: DataFrame) -> DataFrame:
     """Process deactivations data for individual providers.
 
@@ -180,11 +200,24 @@ def process_indiv_data(df: DataFrame, cols: List[str]) -> DataFrame:
     Returns:
         DataFrame: Processed Spark DataFrame containing the selected cols
     """
+    initial_count = df.count()
     df = df.filter(col("Entity Type Code") == 1)
+    filtered_count = df.count()
+    print(
+        f"Dropped {initial_count - filtered_count} \
+        rows after filtering by Entity Type Code"
+    )
+
     df = df.select(
         [col(c).alias(MAIN_TABLE_COLS_MAPPING.get(c, c)) for c in cols]
     )
+    selected_count = df.count()
     df = df.dropDuplicates(subset=["npi"])
+    final_count = df.count()
+    print(
+        f"Dropped {selected_count - final_count} rows after dropping duplicates"
+    )
+
     return df
 
 
