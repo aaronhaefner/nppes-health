@@ -136,12 +136,27 @@ def process_deactivations_data(df: DataFrame) -> DataFrame:
     Returns:
         DataFrame: Processed DataFrame with standardized columns
     """
-    df = df.withColumnRenamed(
-        "NPPES Deactivated Records as of Jun 10 2024", "npi"
-    ).withColumnRenamed("Unnamed: 1", "deactivationdate")
+    # Identify the 'npi' column by partial name match
+    npi_col = [
+        col_name
+        for col_name in df.columns
+        if col_name.startswith("NPPES Deactivated Records")
+    ][0]
 
+    # Identify the 'deactivationdate' column by its original name or position
+    deactivation_col = "Unnamed: 1"
+    if deactivation_col not in df.columns:
+        # Find the next column after 'npi_col' if 'Unnamed: 1' is not present
+        npi_col_index = df.columns.index(npi_col)
+        if npi_col_index + 1 < len(df.columns):
+            deactivation_col = df.columns[npi_col_index + 1]
+        else:
+            raise ValueError("Could not find the 'deactivationdate' column.")
+
+    df = df.withColumnRenamed(npi_col, "npi").withColumnRenamed(
+        deactivation_col, "deactivationdate"
+    )
     df = df.filter(col("npi") != "NPI")
-
     df = df.withColumn(
         "deactivationdate", to_date(col("deactivationdate"), "MM/dd/yyyy")
     )
@@ -268,9 +283,7 @@ def assign_np_type(df: DataFrame) -> DataFrame:
     return df
 
 
-def process_taxonomy_data(
-    taxonomy_df: DataFrame, year: int = 2024
-) -> DataFrame:
+def process_taxonomy_data(taxonomy_df: DataFrame, year: int) -> DataFrame:
     """Process occupational taxonomy data for a given year.
 
     Args:
@@ -280,10 +293,11 @@ def process_taxonomy_data(
     Returns:
         DataFrame: Processed DataFrame containing the taxonomy data
     """
-    if year != 2024:
-        raise ValueError("Only 2024 taxonomy data is supported.")
+    if year < 2016:
+        grouping_var = "Type"
+    else:
+        grouping_var = "Grouping"
 
-    grouping_var = "Grouping"
     df = taxonomy_df.select("Code", grouping_var)
     df = df.filter(col("Code") != "Code")  # Remove header row
 

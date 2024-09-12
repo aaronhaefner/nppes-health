@@ -5,19 +5,19 @@ all: requirements.txt
 # Variables for project configuration
 REQUIREMENTS := requirements.txt
 CONDA_ENV := spark
-PYTHON_VERSION := 3.12
+PYTHON_VERSION := 3.11
 PACKAGES := pyspark pyarrow requests ipython jupyterlab pandas lxml pre-commit ruff black pickleshare openpyxl
 
 # Java, Spark, and Hadoop variables
 JAVA_VERSION := 11
-SPARK_VERSION := 3.5.0
+SPARK_VERSION := 3.5.2
 HADOOP_VERSION := 3.3.6
 
 # Recipes
 $(REQUIREMENTS):
 	$(MAKE) setup
 
-.PHONY: setup activate clean recreate run setup-pre-commit run-pre-commit install-java install-spark install-hadoop
+.PHONY: setup activate clean remake run setup-pre-commit run-pre-commit install-java install-spark install-hadoop
 
 # Install Java
 install-java:
@@ -58,8 +58,8 @@ install-packages:
 	pip freeze > $(REQUIREMENTS)
 	@echo "Packages installed. Requirements exported to $(REQUIREMENTS)"
 
-# Recreate the conda environment
-recreate: clean
+# Remake the conda environment
+remake: clean
 	@echo "Recreating conda environment '$(CONDA_ENV)' with Python $(PYTHON_VERSION)..."
 	$(MAKE) setup
 
