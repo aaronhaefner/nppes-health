@@ -32,6 +32,7 @@ repos:
           - --target-version=py312
           - --select=B,C,E,F,W,D
           - --line-length=80
+          - --exclude=__init__.py
 
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
